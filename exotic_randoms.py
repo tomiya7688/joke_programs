@@ -7,6 +7,11 @@ from dataclasses import asdict
 from typing import Any
 
 from entropy import Seed, SeedInfo, create_rng
+from simulations.double_pendulum import (
+    DoublePendulumConfig,
+    DoublePendulumSimulation,
+    Position3D,
+)
 
 
 class ExoticRandomError(Exception):
@@ -53,4 +58,65 @@ class ExoticRandomBase(ABC):
         return self._seed_info
 
 
-__all__ = ["ExoticRandomBase", "ExoticRandomError", "Seed", "SeedInfo"]
+class DoublePendulumRandom(ExoticRandomBase):
+    """Return successive 3D tip coordinates from a chaotic double pendulum.
+
+    The underlying physics is the standard planar double-pendulum model. Its
+    vertical plane is rotated around the z-axis by a seed-derived azimuth, so
+    every result is a pivot-centered ``(x, y, z)`` coordinate in length units.
+    Successive calls are intentionally time-correlated rather than independent.
+    """
+
+    algorithm_name = "double-pendulum"
+
+    def __init__(
+        self,
+        *,
+        seed: Seed = None,
+        config: DoublePendulumConfig | None = None,
+    ) -> None:
+        super().__init__(seed=seed)
+        self.config = config if config is not None else DoublePendulumConfig()
+        self._simulation = DoublePendulumSimulation(self._rng, self.config)
+
+    def random(self) -> Position3D:
+        """Advance the pendulum and return its second bob coordinate."""
+
+        return self._simulation.step()
+
+    def metadata(self) -> dict[str, Any]:
+        """Return seed metadata plus stable output semantics and time."""
+
+        metadata = super().metadata()
+        metadata.update(
+            {
+                "unit": "length-units",
+                "coordinate_system": "pivot-centered 3D",
+                "time": self._simulation.time,
+            }
+        )
+        return metadata
+
+    def debug(self) -> dict[str, Any]:
+        """Return current simulation state and configuration for inspection."""
+
+        debug = self.metadata()
+        debug.update(
+            {
+                "state": self._simulation.state,
+                "plane_azimuth": self._simulation.plane_azimuth,
+                "config": asdict(self.config),
+                "tip_position": self._simulation.tip_position(),
+            }
+        )
+        return debug
+
+
+__all__ = [
+    "DoublePendulumConfig",
+    "DoublePendulumRandom",
+    "ExoticRandomBase",
+    "ExoticRandomError",
+    "Seed",
+    "SeedInfo",
+]

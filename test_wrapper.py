@@ -35,6 +35,16 @@ class WrapperTests(unittest.TestCase):
         self.assertIn(answer, FROG_VOICES)
         self.assertIsInstance(answer, str)
 
+    def test_default_wrapper_registers_double_pendulum(self):
+        wrapper = create_default_wrapper()
+
+        self.assertIn("double_pendulum", wrapper.available())
+        wrapper.create("double_pendulum", seed="wrapper-test")
+        point = wrapper.invoke("double_pendulum")
+
+        self.assertIsInstance(point, tuple)
+        self.assertEqual(len(point), 3)
+
     def test_invoke_all_and_callable_fallback(self):
         wrapper = ExoticRandomWrapper(
             {"counter": Counter, "callable": CallableGenerator}
