@@ -8,7 +8,8 @@ from typing import Any
 
 from entropy import Seed, SeedInfo, create_rng
 from simulations.bingo import BingoConfig, BingoGameResult, BingoSimulation
-from simulations.kettle import KettleConfig, KettleResult, KettleSimulation\nfrom simulations.double_pendulum import (
+from simulations.kettle import KettleConfig, KettleResult, KettleSimulation
+from simulations.double_pendulum import (
     DoublePendulumConfig,
     DoublePendulumSimulation,
     Position3D,
