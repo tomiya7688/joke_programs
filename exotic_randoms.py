@@ -8,7 +8,7 @@ from typing import Any
 
 from entropy import Seed, SeedInfo, create_rng
 from simulations.bingo import BingoConfig, BingoGameResult, BingoSimulation
-from simulations.double_pendulum import (
+from simulations.kettle import KettleConfig, KettleResult, KettleSimulation\nfrom simulations.double_pendulum import (
     DoublePendulumConfig,
     DoublePendulumSimulation,
     Position3D,
@@ -157,6 +157,55 @@ class BingoWinnerTurnRandom(ExoticRandomBase):
         return debug
 
 
+class KettleEvaporationRandom(ExoticRandomBase):
+    """Return the number of seconds until a simulated kettle evaporates dry."""
+
+    algorithm_name = "kettle-evaporation"
+
+    def __init__(
+        self,
+        *,
+        seed: Seed = None,
+        config: KettleConfig | None = None,
+    ) -> None:
+        super().__init__(seed=seed)
+        self.config = config if config is not None else KettleConfig()
+        self._simulation = KettleSimulation(self._rng, self.config)
+
+    def random(self) -> int:
+        """Simulate one fresh kettle and return evaporation time in seconds."""
+
+        result = self._simulation.run()
+        if not result.completed:
+            raise RuntimeError(
+                f"kettle did not evaporate within {self.config.max_seconds} seconds"
+            )
+        return result.elapsed_seconds
+
+    def metadata(self) -> dict[str, Any]:
+        """Return seed metadata and stable output semantics."""
+
+        metadata = super().metadata()
+        metadata.update(
+            {
+                "unit": "seconds",
+                "minimum": 1,
+                "maximum": self.config.max_seconds,
+                "initial_volume_ml": self.config.initial_volume_ml,
+            }
+        )
+        return metadata
+
+    def debug(self) -> dict[str, Any]:
+        """Return configuration and the most recent bounded simulation result."""
+
+        debug = self.metadata()
+        debug["config"] = asdict(self.config)
+        result: KettleResult | None = self._simulation.last_result
+        debug["last_result"] = None if result is None else asdict(result)
+        return debug
+
+
 __all__ = [
     "BingoConfig",
     "BingoWinnerTurnRandom",
@@ -164,6 +213,8 @@ __all__ = [
     "DoublePendulumRandom",
     "ExoticRandomBase",
     "ExoticRandomError",
+    "KettleConfig",
+    "KettleEvaporationRandom",
     "Seed",
     "SeedInfo",
 ]
