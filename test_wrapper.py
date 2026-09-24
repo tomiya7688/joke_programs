@@ -56,6 +56,16 @@ class WrapperTests(unittest.TestCase):
         self.assertGreaterEqual(turn, 4)
         self.assertLessEqual(turn, 75)
 
+    def test_default_wrapper_registers_kettle_evaporation(self):
+        wrapper = create_default_wrapper()
+
+        self.assertIn("kettle_evaporation", wrapper.available())
+        wrapper.create("kettle_evaporation", seed="wrapper-kettle")
+        seconds = wrapper.invoke("kettle_evaporation")
+
+        self.assertIsInstance(seconds, int)
+        self.assertGreater(seconds, 0)
+
     def test_invoke_all_and_callable_fallback(self):
         wrapper = ExoticRandomWrapper(
             {"counter": Counter, "callable": CallableGenerator}
