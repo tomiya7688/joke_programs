@@ -7,6 +7,7 @@ from dataclasses import asdict
 from typing import Any
 
 from entropy import Seed, SeedInfo, create_rng
+from simulations.bingo import BingoConfig, BingoGameResult, BingoSimulation
 from simulations.double_pendulum import (
     DoublePendulumConfig,
     DoublePendulumSimulation,
@@ -112,7 +113,53 @@ class DoublePendulumRandom(ExoticRandomBase):
         return debug
 
 
+class BingoWinnerTurnRandom(ExoticRandomBase):
+    """Return the turn on which the first player wins a 75-ball bingo game."""
+
+    algorithm_name = "bingo-winner-turn"
+
+    def __init__(
+        self,
+        *,
+        seed: Seed = None,
+        config: BingoConfig | None = None,
+    ) -> None:
+        super().__init__(seed=seed)
+        self.config = config if config is not None else BingoConfig()
+        self._simulation = BingoSimulation(self._rng, self.config)
+
+    def random(self) -> int:
+        """Play one game and return its first winning turn (1-based)."""
+
+        return self._simulation.play().winner_turn
+
+    def metadata(self) -> dict[str, Any]:
+        """Return seed metadata and stable bingo output semantics."""
+
+        metadata = super().metadata()
+        metadata.update(
+            {
+                "unit": "draw-turn",
+                "minimum": 4 if self.config.free_center else 5,
+                "maximum": BingoSimulation.BALL_COUNT,
+                "player_count": self.config.player_count,
+            }
+        )
+        return metadata
+
+    def debug(self) -> dict[str, Any]:
+        """Return configuration and the most recent complete game result."""
+
+        debug = self.metadata()
+        debug["config"] = asdict(self.config)
+        result: BingoGameResult | None = self._simulation.last_result
+        debug["last_result"] = None if result is None else asdict(result)
+        return debug
+
+
 __all__ = [
+    "BingoConfig",
+    "BingoWinnerTurnRandom",
     "DoublePendulumConfig",
     "DoublePendulumRandom",
     "ExoticRandomBase",

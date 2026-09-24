@@ -45,6 +45,17 @@ class WrapperTests(unittest.TestCase):
         self.assertIsInstance(point, tuple)
         self.assertEqual(len(point), 3)
 
+    def test_default_wrapper_registers_bingo_winner_turn(self):
+        wrapper = create_default_wrapper()
+
+        self.assertIn("bingo_winner_turn", wrapper.available())
+        wrapper.create("bingo_winner_turn", seed="wrapper-bingo")
+        turn = wrapper.invoke("bingo_winner_turn")
+
+        self.assertIsInstance(turn, int)
+        self.assertGreaterEqual(turn, 4)
+        self.assertLessEqual(turn, 75)
+
     def test_invoke_all_and_callable_fallback(self):
         wrapper = ExoticRandomWrapper(
             {"counter": Counter, "callable": CallableGenerator}
