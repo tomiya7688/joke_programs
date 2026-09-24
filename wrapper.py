@@ -121,11 +121,12 @@ class ExoticRandomWrapper:
 def create_default_wrapper() -> ExoticRandomWrapper:
     """Return a wrapper with all currently available generators registered."""
 
-    from exotic_randoms import DoublePendulumRandom
+    from exotic_randoms import BingoWinnerTurnRandom, DoublePendulumRandom
     from frog import Frog
 
     return ExoticRandomWrapper(
         {
+            "bingo_winner_turn": BingoWinnerTurnRandom,
             "double_pendulum": DoublePendulumRandom,
             "frog": Frog,
         }
